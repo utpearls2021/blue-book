@@ -1,0 +1,29 @@
+export const get72HoursPaymentRequest = async() => {
+  return await PaymentRequestModel.aggregate([
+    {
+      $match:{
+        paymentStatus: "Pending"
+      }
+    },
+    {
+      $lookup: {
+        from: "histories",
+        localField: "_id",
+        foreignField: "paymentRequestId",
+        as: "history"
+      }
+    },
+    {
+      $unwind:{
+        path: "$history",
+        preserveNullAndEmptyArrays: true,
+      }
+    },
+    {
+      $match:{
+        "history._id":{$gt: ObjectId.createFromTime((Date.now() / 1000) - 3 * 24 * 60 * 60)}
+      }
+    },
+    { $sort : {createdAt: -1}},
+  ]);
+}
